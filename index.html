@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TM Translator</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <title>TM Translator</title>
 
   <style>
     * {
@@ -15,91 +14,114 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #0b0b0f;
+      background: #0f172a;
       color: white;
+      min-height: 100vh;
     }
 
     .header {
-      padding: 22px 18px;
       text-align: center;
-      background: #111118;
-      border-bottom: 1px solid #292933;
+      padding: 30px 15px 20px;
     }
 
     .header h1 {
       margin: 0;
-      font-size: 28px;
+      font-size: 30px;
     }
 
     .header p {
-      margin: 8px 0 0;
-      color: #aaa;
-      font-size: 14px;
+      color: #aeb8cc;
+      margin-top: 8px;
     }
 
     .container {
       width: 92%;
-      max-width: 700px;
-      margin: 25px auto;
+      max-width: 650px;
+      margin: 10px auto 40px;
     }
 
     .card {
-      background: #15151d;
-      border: 1px solid #292933;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
+      background: #17213b;
+      border: 1px solid #263454;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
     }
 
     .card h2 {
       margin-top: 0;
+      font-size: 22px;
     }
 
-    input[type="file"] {
+    .description {
+      color: #b9c3d8;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin-top: 22px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input {
       width: 100%;
-      padding: 14px;
-      background: #0e0e14;
-      color: white;
-      border: 1px solid #33333d;
+      padding: 15px;
       border-radius: 10px;
+      border: 1px solid #39486b;
+      background: #0d1426;
+      color: white;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #8b5cf6;
     }
 
     button {
       width: 100%;
+      margin-top: 18px;
       padding: 15px;
-      margin-top: 15px;
-      border: 0;
+      border: none;
       border-radius: 10px;
-      background: #7c3aed;
+      background: #8b5cf6;
       color: white;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: bold;
       cursor: pointer;
     }
 
-    button:disabled {
-      opacity: 0.5;
+    button:hover {
+      background: #7c3aed;
     }
 
     #status {
-      margin-top: 15px;
-      text-align: center;
-      color: #bbb;
-      line-height: 1.5;
-    }
-
-    canvas {
-      width: 100%;
-      height: auto;
-      margin-top: 20px;
+      margin-top: 18px;
+      padding: 13px;
       border-radius: 10px;
+      background: #10182c;
+      color: #c8d1e5;
+      line-height: 1.5;
       display: none;
     }
 
-    .note {
-      color: #999;
-      font-size: 13px;
+    .info {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #111a30;
+      color: #aeb8cc;
+      font-size: 14px;
       line-height: 1.5;
+    }
+
+    .footer {
+      text-align: center;
+      color: #68748d;
+      font-size: 13px;
+      padding-bottom: 30px;
     }
   </style>
 </head>
@@ -114,229 +136,82 @@
   <div class="container">
 
     <div class="card">
-      <h2>Translate a Manga Page</h2>
 
-      <p class="note">
-        First prototype: upload one manga page image.
-        The system will detect English text and try to translate it into Telugu.
+      <h2>🔗 Translate Manga Chapter</h2>
+
+      <p class="description">
+        Paste an English manga/manhwa chapter URL below.
+        The translator will prepare the chapter for Telugu translation.
       </p>
 
-      <input id="imageInput" type="file" accept="image/*">
+      <label for="chapterUrl">Chapter URL</label>
 
-      <button id="translateBtn" disabled>
-        🔄 Translate to Telugu
+      <input
+        type="url"
+        id="chapterUrl"
+        placeholder="https://example.com/chapter-106.html"
+        autocomplete="off"
+      >
+
+      <button onclick="translateChapter()">
+        🚀 Translate Chapter
       </button>
 
-      <div id="status">
-        Select a manga page to begin.
+      <div id="status"></div>
+
+      <div class="info">
+        💡 Example:<br><br>
+        https://www.manganeon.com/en/solo-leveling/solo-leveling-chapter-106.html
       </div>
 
-      <canvas id="canvas"></canvas>
     </div>
 
   </div>
 
-<script>
-
-const imageInput = document.getElementById("imageInput");
-const translateBtn = document.getElementById("translateBtn");
-const statusBox = document.getElementById("status");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-let selectedImage = null;
-
-imageInput.addEventListener("change", function () {
-
-  const file = this.files[0];
-
-  if (!file) {
-    translateBtn.disabled = true;
-    return;
-  }
-
-  selectedImage = file;
-  translateBtn.disabled = false;
-
-  statusBox.innerText =
-    "✅ Image selected. Tap Translate to Telugu.";
-
-});
+  <div class="footer">
+    TM Translator • English → Telugu
+  </div>
 
 
-translateBtn.addEventListener("click", async function () {
+  <script>
 
-  if (!selectedImage) return;
+    function translateChapter() {
 
-  translateBtn.disabled = true;
-  canvas.style.display = "none";
+      const input = document.getElementById("chapterUrl");
+      const status = document.getElementById("status");
 
-  try {
+      const url = input.value.trim();
 
-    statusBox.innerText =
-      "🔍 Reading English text... Please wait.";
+      status.style.display = "block";
 
-    const imageURL = URL.createObjectURL(selectedImage);
-
-    const img = new Image();
-
-    img.onload = async function () {
-
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      ctx.drawImage(img, 0, 0);
-
-      statusBox.innerText =
-        "🤖 AI/OCR is detecting the text...";
-
-      const result = await Tesseract.recognize(
-        selectedImage,
-        "eng",
-        {
-          logger: function(info) {
-
-            if (info.status === "recognizing text") {
-
-              const percent =
-                Math.round((info.progress || 0) * 100);
-
-              statusBox.innerText =
-                "🔍 Detecting English text: " +
-                percent + "%";
-
-            }
-
-          }
-        }
-      );
-
-      const words = result.data.words;
-
-      if (!words || words.length === 0) {
-
-        statusBox.innerText =
-          "❌ No English text detected.";
-
-        translateBtn.disabled = false;
+      if (!url) {
+        status.innerHTML =
+          "⚠️ Please paste a chapter URL first.";
         return;
       }
 
-      statusBox.innerText =
-        "🌐 Translating English → Telugu...";
+      try {
 
-      for (const word of words) {
+        const parsedUrl = new URL(url);
 
-        const english = word.text.trim();
+        status.innerHTML =
+          "✅ Chapter URL received.<br><br>" +
+          "🌐 Website: " + parsedUrl.hostname + "<br>" +
+          "📖 Chapter link ready.<br><br>" +
+          "⏳ Manga page fetching + OCR + Telugu image replacement " +
+          "will be connected in the next step.";
 
-        if (!english || english.length < 2) {
-          continue;
-        }
+      } catch (error) {
 
-        let telugu = await translateText(english);
+        status.innerHTML =
+          "❌ This doesn't look like a valid URL.<br>" +
+          "Please paste the complete chapter link.";
 
-        if (!telugu) {
-          telugu = english;
-        }
-
-        const x = word.bbox.x0;
-        const y = word.bbox.y0;
-        const w = word.bbox.x1 - word.bbox.x0;
-        const h = word.bbox.y1 - word.bbox.y0;
-
-        /*
-          Prototype:
-          Cover detected English word and place Telugu text.
-          Later we will replace this with proper manga
-          bubble detection + AI inpainting.
-        */
-
-        ctx.fillStyle = "white";
-        ctx.fillRect(
-          x - 2,
-          y - 2,
-          w + 4,
-          h + 4
-        );
-
-        let fontSize = Math.max(12, h * 0.9);
-
-        ctx.font =
-          fontSize + "px Arial";
-
-        ctx.fillStyle = "black";
-
-        ctx.textBaseline = "top";
-
-        ctx.fillText(
-          telugu,
-          x,
-          y
-        );
       }
-
-      canvas.style.display = "block";
-
-      statusBox.innerText =
-        "✅ Translation complete!";
-
-      URL.revokeObjectURL(imageURL);
-
-      translateBtn.disabled = false;
-
-    };
-
-    img.src = imageURL;
-
-  } catch (error) {
-
-    console.error(error);
-
-    statusBox.innerText =
-      "❌ Something went wrong. Try another image.";
-
-    translateBtn.disabled = false;
-  }
-
-});
-
-
-async function translateText(text) {
-
-  try {
-
-    const url =
-      "https://api.mymemory.translated.net/get?q=" +
-      encodeURIComponent(text) +
-      "&langpair=en|te";
-
-    const response = await fetch(url);
-
-    const data = await response.json();
-
-    if (
-      data &&
-      data.responseData &&
-      data.responseData.translatedText
-    ) {
-
-      return data.responseData.translatedText;
 
     }
 
-  } catch (error) {
-
-    console.log(
-      "Translation error:",
-      error
-    );
-
-  }
-
-  return "";
-}
-
-</script>
+  </script>
 
 </body>
-  </html>
+</html>
