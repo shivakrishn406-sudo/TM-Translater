@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>TM Translator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      padding: 30px 15px 20px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    .header p {
+      color: #aeb8cc;
+      margin-top: 8px;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 650px;
+      margin: 10px auto 40px;
+    }
+
+    .card {
+      background: #17213b;
+      border: 1px solid #263454;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    .description {
+      color: #b9c3d8;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin-top: 22px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #39486b;
+      background: #0d1426;
+      color: white;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #8b5cf6;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      background: #8b5cf6;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #7c3aed;
+    }
+
+    #status {
+      margin-top: 18px;
+      padding: 13px;
+      border-radius: 10px;
+      background: #10182c;
+      color: #c8d1e5;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .info {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #111a30;
+      color: #aeb8cc;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .footer {
+      text-align: center;
+      color: #68748d;
+      font-size: 13px;
+      padding-bottom: 30px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>📖 TM Translator</h1>
+    <p>English Manhwa → Telugu</p>
+  </div>
+
+  <div class="container">
+
+    <div class="card">
+
+      <h2>🔗 Translate Manga Chapter</h2>
+
+      <p class="description">
+        Paste an English manga/manhwa chapter URL below.
+        The translator will prepare the chapter for Telugu translation.
+      </p>
+
+      <label for="chapterUrl">Chapter URL</label>
+
+      <input
+        type="url"
+        id="chapterUrl"
+        placeholder="https://example.com/chapter-106.html"
+        autocomplete="off"
+      >
+
+      <button onclick="translateChapter()">
+        🚀 Translate Chapter
+      </button>
+
+      <div id="status"></div>
+
+      <div class="info">
+        💡 Example:<br><br>
+        https://www.manganeon.com/en/solo-leveling/solo-leveling-chapter-106.html
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">
+    TM Translator • English → Telugu
+  </div>
+
+
+  <script>
+
+    function translateChapter() {
+
+      const input = document.getElementById("chapterUrl");
+      const status = document.getElementById("status");
+
+      const url = input.value.trim();
+
+      status.style.display = "block";
+
+      if (!url) {
+        status.innerHTML =
+          "⚠️ Please paste a chapter URL first.";
+        return;
+      }
+
+      try {
+
+        const parsedUrl = new URL(url);
+
+        status.innerHTML =
+          "✅ Chapter URL received.<br><br>" +
+          "🌐 Website: " + parsedUrl.hostname + "<br>" +
+          "📖 Chapter link ready.<br><br>" +
+          "⏳ Manga page fetching + OCR + Telugu image replacement " +
+          "will be connected in the next step.";
+
+      } catch (error) {
+
+        status.innerHTML =
+          "❌ This doesn't look like a valid URL.<br>" +
+          "Please paste the complete chapter link.";
+
+      }
+
+    }
+
+  </script>
+
+</body>
+</html>
