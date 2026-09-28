@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TM Translator</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0b0f;
+      color: white;
+    }
+
+    .header {
+      padding: 22px 18px;
+      text-align: center;
+      background: #111118;
+      border-bottom: 1px solid #292933;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .header p {
+      margin: 8px 0 0;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 700px;
+      margin: 25px auto;
+    }
+
+    .card {
+      background: #15151d;
+      border: 1px solid #292933;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 14px;
+      background: #0e0e14;
+      color: white;
+      border: 1px solid #33333d;
+      border-radius: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 15px;
+      border: 0;
+      border-radius: 10px;
+      background: #7c3aed;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+    }
+
+    #status {
+      margin-top: 15px;
+      text-align: center;
+      color: #bbb;
+      line-height: 1.5;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      margin-top: 20px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .note {
+      color: #999;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>📖 TM Translator</h1>
+    <p>English Manhwa → Telugu</p>
+  </div>
+
+  <div class="container">
+
+    <div class="card">
+      <h2>Translate a Manga Page</h2>
+
+      <p class="note">
+        First prototype: upload one manga page image.
+        The system will detect English text and try to translate it into Telugu.
+      </p>
+
+      <input id="imageInput" type="file" accept="image/*">
+
+      <button id="translateBtn" disabled>
+        🔄 Translate to Telugu
+      </button>
+
+      <div id="status">
+        Select a manga page to begin.
+      </div>
+
+      <canvas id="canvas"></canvas>
+    </div>
+
+  </div>
+
+<script>
+
+const imageInput = document.getElementById("imageInput");
+const translateBtn = document.getElementById("translateBtn");
+const statusBox = document.getElementById("status");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let selectedImage = null;
+
+imageInput.addEventListener("change", function () {
+
+  const file = this.files[0];
+
+  if (!file) {
+    translateBtn.disabled = true;
+    return;
+  }
+
+  selectedImage = file;
+  translateBtn.disabled = false;
+
+  statusBox.innerText =
+    "✅ Image selected. Tap Translate to Telugu.";
+
+});
+
+
+translateBtn.addEventListener("click", async function () {
+
+  if (!selectedImage) return;
+
+  translateBtn.disabled = true;
+  canvas.style.display = "none";
+
+  try {
+
+    statusBox.innerText =
+      "🔍 Reading English text... Please wait.";
+
+    const imageURL = URL.createObjectURL(selectedImage);
+
+    const img = new Image();
+
+    img.onload = async function () {
+
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      ctx.drawImage(img, 0, 0);
+
+      statusBox.innerText =
+        "🤖 AI/OCR is detecting the text...";
+
+      const result = await Tesseract.recognize(
+        selectedImage,
+        "eng",
+        {
+          logger: function(info) {
+
+            if (info.status === "recognizing text") {
+
+              const percent =
+                Math.round((info.progress || 0) * 100);
+
+              statusBox.innerText =
+                "🔍 Detecting English text: " +
+                percent + "%";
+
+            }
+
+          }
+        }
+      );
+
+      const words = result.data.words;
+
+      if (!words || words.length === 0) {
+
+        statusBox.innerText =
+          "❌ No English text detected.";
+
+        translateBtn.disabled = false;
+        return;
+      }
+
+      statusBox.innerText =
+        "🌐 Translating English → Telugu...";
+
+      for (const word of words) {
+
+        const english = word.text.trim();
+
+        if (!english || english.length < 2) {
+          continue;
+        }
+
+        let telugu = await translateText(english);
+
+        if (!telugu) {
+          telugu = english;
+        }
+
+        const x = word.bbox.x0;
+        const y = word.bbox.y0;
+        const w = word.bbox.x1 - word.bbox.x0;
+        const h = word.bbox.y1 - word.bbox.y0;
+
+        /*
+          Prototype:
+          Cover detected English word and place Telugu text.
+          Later we will replace this with proper manga
+          bubble detection + AI inpainting.
+        */
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(
+          x - 2,
+          y - 2,
+          w + 4,
+          h + 4
+        );
+
+        let fontSize = Math.max(12, h * 0.9);
+
+        ctx.font =
+          fontSize + "px Arial";
+
+        ctx.fillStyle = "black";
+
+        ctx.textBaseline = "top";
+
+        ctx.fillText(
+          telugu,
+          x,
+          y
+        );
+      }
+
+      canvas.style.display = "block";
+
+      statusBox.innerText =
+        "✅ Translation complete!";
+
+      URL.revokeObjectURL(imageURL);
+
+      translateBtn.disabled = false;
+
+    };
+
+    img.src = imageURL;
+
+  } catch (error) {
+
+    console.error(error);
+
+    statusBox.innerText =
+      "❌ Something went wrong. Try another image.";
+
+    translateBtn.disabled = false;
+  }
+
+});
+
+
+async function translateText(text) {
+
+  try {
+
+    const url =
+      "https://api.mymemory.translated.net/get?q=" +
+      encodeURIComponent(text) +
+      "&langpair=en|te";
+
+    const response = await fetch(url);
+
+    const data = await response.json();
+
+    if (
+      data &&
+      data.responseData &&
+      data.responseData.translatedText
+    ) {
+
+      return data.responseData.translatedText;
+
+    }
+
+  } catch (error) {
+
+    console.log(
+      "Translation error:",
+      error
+    );
+
+  }
+
+  return "";
+}
+
+</script>
+
+</body>
+  </html>
